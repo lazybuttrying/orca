@@ -1,4 +1,4 @@
-import { trimFileLinkRangeTrailingNonAsciiLetters } from '../../../shared/file-link-trailing-prose'
+import { trimFileLinkRangeTrailingNonAsciiLetters } from '../../../shared/non-ascii-terminal-text-boundary'
 import {
   detectTerminalFileLinkRanges,
   terminalFileLinkRangesOverlap,

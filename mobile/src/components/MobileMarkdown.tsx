@@ -7,7 +7,7 @@ import {
   isFilePathCodeSpan,
   normalizeFilePath
 } from './markdown-file-path-detection'
-import { trimFileLinkTrailingNonAsciiLetters } from '../../../src/shared/file-link-trailing-prose'
+import { trimFileLinkTrailingNonAsciiLetters } from '../../../src/shared/non-ascii-terminal-text-boundary'
 import { routeMarkdownHref } from './markdown-href-routing'
 import {
   isIntrawordUnderscoreToken,

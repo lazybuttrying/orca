@@ -7,7 +7,7 @@ import {
   parseFileLinkLocation,
   type ParsedFileLinkLocation
 } from '../../../src/shared/file-link-location'
-import { trimFileLinkRangeTrailingNonAsciiLetters } from '../../../src/shared/file-link-trailing-prose'
+import { trimFileLinkRangeTrailingNonAsciiLetters } from '../../../src/shared/non-ascii-terminal-text-boundary'
 
 export type TappedFilePath = ParsedFileLinkLocation
 

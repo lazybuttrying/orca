@@ -1,4 +1,4 @@
-import { trimFileLinkRangeTrailingNonAsciiLetters } from '../../../shared/file-link-trailing-prose'
+import { trimFileLinkRangeTrailingNonAsciiLetters } from '../../../shared/non-ascii-terminal-text-boundary'
 import { normalizeAbsolutePath } from './terminal-path-normalization'
 import { resolveExplicitFileLinkTarget } from './explicit-file-link-target'
 import { detectBareFilenameLinks } from './terminal-bare-file-link-detection'

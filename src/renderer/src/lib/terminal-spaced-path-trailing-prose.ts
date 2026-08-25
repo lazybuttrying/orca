@@ -5,7 +5,7 @@ import type { DetectedTerminalFileLinkRange } from './terminal-file-link-detecti
 // extension token only extends the span when the added segment is path-like
 // (contains a separator) — "v1.2 reports/result.json" extends, prose like
 // "failed to start app.py" must not be swallowed.
-// Also stop before non-ASCII letters so `…/파일.md로 열었습니다` keeps only
+// Also stop before non-ASCII letters (#15240 mirror) so `…/파일.md로` keeps only
 // the path after `\p{L}` widening (space-only trim leaves the particle).
 const EXTENSION_PREFIX_PATTERN =
   /\.[A-Za-z0-9_+-]+(?::\d+)?(?::\d+)?(?=\s+|$|(?:(?![A-Za-z])\p{L}))/gu

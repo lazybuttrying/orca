@@ -1,10 +1,26 @@
 import { describe, expect, it } from 'vitest'
 import {
+  isNonAsciiProseBoundary,
   trimFileLinkRangeTrailingNonAsciiLetters,
   trimFileLinkTrailingNonAsciiLetters
-} from './file-link-trailing-prose'
+} from './non-ascii-terminal-text-boundary'
 
-describe('trimFileLinkTrailingNonAsciiLetters', () => {
+describe('isNonAsciiProseBoundary (#15240)', () => {
+  it('treats full-width punctuation and ideographic space as prose boundaries', () => {
+    expect(isNonAsciiProseBoundary('（'.charCodeAt(0))).toBe(true)
+    expect(isNonAsciiProseBoundary('、'.charCodeAt(0))).toBe(true)
+    expect(isNonAsciiProseBoundary('。'.charCodeAt(0))).toBe(true)
+    expect(isNonAsciiProseBoundary('\u3000'.charCodeAt(0))).toBe(true)
+  })
+
+  it('does not treat CJK letters in a path as prose boundaries', () => {
+    expect(isNonAsciiProseBoundary('文'.charCodeAt(0))).toBe(false)
+    expect(isNonAsciiProseBoundary('档'.charCodeAt(0))).toBe(false)
+    expect(isNonAsciiProseBoundary('로'.charCodeAt(0))).toBe(false)
+  })
+})
+
+describe('trimFileLinkTrailingNonAsciiLetters (file-link mirror of #15240)', () => {
   it.each([
     ['README.md로', 'README.md'],
     ['AGENTS.md에', 'AGENTS.md'],

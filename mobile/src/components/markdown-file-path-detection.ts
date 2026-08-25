@@ -4,7 +4,7 @@
 // annoyance, but a false positive on prose or a version number is a broken tap.
 
 import { parseFileLinkLocation } from '../../../src/shared/file-link-location'
-import { trimFileLinkTrailingNonAsciiLetters } from '../../../src/shared/file-link-trailing-prose'
+import { trimFileLinkTrailingNonAsciiLetters } from '../../../src/shared/non-ascii-terminal-text-boundary'
 
 export type FilePathSegment =
   | { type: 'text'; value: string }
