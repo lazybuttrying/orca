@@ -114,8 +114,8 @@ describe('terminal path helpers', () => {
     })
 
     it.each([
-      ['README.md로', 'README.md'],
-      ['AGENTS.md에', 'AGENTS.md'],
+      ['README.mdへ', 'README.md'],
+      ['AGENTS.mdに', 'AGENTS.md'],
       ['file.tsです', 'file.ts']
     ])('trims CJK/JP particles from bare filenames: %s', (token, pathText) => {
       const links = extractTerminalFileLinks(token)
@@ -231,7 +231,7 @@ describe('terminal path helpers', () => {
     // character, so only the ASCII prefix was linkified and the filename sat
     // outside every link range (#13396).
     it.each([
-      ['Korean', '/Users/me/docs/한글폴더/파일.md'],
+      ['Japanese', '/Users/me/docs/日本語フォルダ/ファイル.md'],
       ['Japanese', '/Users/me/docs/日本語/ファイル.md'],
       ['Chinese', '/Users/me/docs/中文目录/文件.md'],
       ['Cyrillic', '/Users/me/docs/Документы/файл.md'],
@@ -243,31 +243,46 @@ describe('terminal path helpers', () => {
     })
 
     it('detects relative paths that start with a non-Latin segment', () => {
-      const links = extractTerminalFileLinks('한글폴더/파일.md')
+      const links = extractTerminalFileLinks('日本語フォルダ/ファイル.md')
       expect(links).toHaveLength(1)
-      expect(links[0]).toMatchObject({ pathText: '한글폴더/파일.md' })
+      expect(links[0]).toMatchObject({ pathText: '日本語フォルダ/ファイル.md' })
     })
 
     it('keeps line and column suffixes on non-Latin paths', () => {
-      const links = extractTerminalFileLinks('/Users/me/docs/한글폴더/파일.ts:42:7')
+      const links = extractTerminalFileLinks('/Users/me/docs/日本語フォルダ/ファイル.ts:42:7')
       expect(links).toHaveLength(1)
       expect(links[0]).toMatchObject({
-        pathText: '/Users/me/docs/한글폴더/파일.ts',
+        pathText: '/Users/me/docs/日本語フォルダ/ファイル.ts',
         line: 42,
         column: 7
       })
     })
 
-    // macOS stores many names decomposed, while terminal output is composed.
+    // macOS stores many names decomposed; the assertion pins \p{M}, which a Jamo-only
+    // fixture would leave untested.
     it('detects NFD-decomposed non-Latin paths', () => {
-      const path = `/Users/me/docs/${'한글폴더'.normalize('NFD')}/${'파일.md'.normalize('NFD')}`
+      const path = `/Users/me/docs/${'日本語フォルダ'.normalize('NFD')}/${'ファイル.md'.normalize('NFD')}`
+      expect(/\p{M}/u.test(path)).toBe(true)
       const links = extractTerminalFileLinks(path)
       expect(links).toHaveLength(1)
       expect(links[0]).toMatchObject({ pathText: path })
     })
 
+    // \p{L} removes the accidental truncation at the first non-Latin byte, so the
+    // trim must cover tails that are not a bare letter run (#10573 review).
+    it.each([
+      ['plans/foo.mdを(参照)', 'plans/foo.md'],
+      ['plans/foo.mdへabc', 'plans/foo.md'],
+      ['docs/日本語.md」を 参照', 'docs/日本語.md']
+    ])('stops at prose punctuation glued after an extension: %s', (line, expected) => {
+      const links = extractTerminalFileLinks(line)
+      expect(links.map((link) => link.pathText)).toContain(expected)
+      const link = links.find((entry) => entry.pathText === expected)
+      expect(line.slice(link!.startIndex, link!.endIndex)).toBe(expected)
+    })
+
     it('trims particles glued after a separator path extension', () => {
-      const line = '저장 경로는 plans/foo.md로 확정했습니다.'
+      const line = '保存先は plans/foo.mdへ 確定しました.'
       const links = extractTerminalFileLinks(line)
       expect(links.map((link) => link.pathText)).toContain('plans/foo.md')
       const link = links.find((entry) => entry.pathText === 'plans/foo.md')
@@ -276,8 +291,8 @@ describe('terminal path helpers', () => {
     })
 
     it('trims particles after a non-Latin path while keeping the CJK segments', () => {
-      const path = '/Users/me/docs/한글폴더/파일.md'
-      const line = `${path}로 열었습니다`
+      const path = '/Users/me/docs/日本語フォルダ/ファイル.md'
+      const line = `${path}へ 開きました`
       const links = extractTerminalFileLinks(line)
       expect(links).toHaveLength(1)
       expect(links[0]).toMatchObject({ pathText: path, displayText: path })

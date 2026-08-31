@@ -1,4 +1,4 @@
-import { trimFileLinkRangeTrailingNonAsciiLetters } from '../../../shared/non-ascii-terminal-text-boundary'
+import { trimFileLinkRangeTrailingNonAsciiProse } from '../../../shared/non-ascii-terminal-text-boundary'
 import { normalizeAbsolutePath } from './terminal-path-normalization'
 import { resolveExplicitFileLinkTarget } from './explicit-file-link-target'
 import { detectBareFilenameLinks } from './terminal-bare-file-link-detection'
@@ -36,8 +36,7 @@ export type ResolvedTerminalFileLink = Pick<ParsedTerminalFileLink, 'line' | 'co
 // Why: framework route files commonly use punctuation segments like
 // `app/(shop)/products/[id]/page.tsx`; keep those links whole.
 // Why \p{L}\p{M}\p{N}: an ASCII-only class truncated at the first non-Latin
-// character (#13396). Pair with trimFileLinkRangeTrailingNonAsciiLetters so
-// particles glued after an extension (`…/파일.md로`) are not swallowed.
+// character (#13396); the trim below drops what follows the extension.
 const LOCAL_PATH_REGEX =
   /(?:~[\\/]|[\\/]|\.{1,2}[\\/]|[A-Za-z]:[\\/]|[\p{L}\p{M}\p{N}._-]+[\\/])[\p{L}\p{M}\p{N}._~\-/%+@\\()[\]]*(?::\d+)?(?::\d+)?/gu
 
@@ -178,7 +177,7 @@ function detectLocalPathLinks(
     if (!/[\\/]/.test(range.text)) {
       continue
     }
-    const link = toParsedTerminalFileLink(trimFileLinkRangeTrailingNonAsciiLetters(range))
+    const link = toParsedTerminalFileLink(trimFileLinkRangeTrailingNonAsciiProse(range))
     if (link) {
       links.push(link)
     }
@@ -220,7 +219,7 @@ function detectSpacedLocalPathLinks(
       const candidateLinks = candidateRanges
         .map((candidateRange) =>
           toParsedTerminalFileLink(
-            trimFileLinkRangeTrailingNonAsciiLetters(
+            trimFileLinkRangeTrailingNonAsciiProse(
               trimSpacedPathTrailingProse(trimTrailingWhitespace(candidateRange))
             )
           )

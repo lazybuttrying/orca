@@ -7,7 +7,7 @@ import {
   parseFileLinkLocation,
   type ParsedFileLinkLocation
 } from '../../../src/shared/file-link-location'
-import { trimFileLinkRangeTrailingNonAsciiLetters } from '../../../src/shared/non-ascii-terminal-text-boundary'
+import { trimFileLinkRangeTrailingNonAsciiProse } from '../../../src/shared/non-ascii-terminal-text-boundary'
 
 export type TappedFilePath = ParsedFileLinkLocation
 
@@ -17,7 +17,7 @@ export type TappedFilePath = ParsedFileLinkLocation
 // existence-check reject non-files — agents often print a bare filename, so
 // requiring a slash would miss the common case.
 // Why \p{L}\p{M}\p{N}: ASCII-only classes truncated CJK path segments (#13396).
-// Pair with trimFileLinkRangeTrailingNonAsciiLetters so glued particles after
+// Pair with trimFileLinkRangeTrailingNonAsciiProse so glued particles after
 // an extension are not part of the tap target.
 const LOCAL_PATH_REGEX =
   /(?:~[\\/]|[\\/]|\.{1,2}[\\/]|[A-Za-z]:[\\/]|[\p{L}\p{M}\p{N}._-]+[\\/]|(?=[\p{L}\p{M}\p{N}._-]*\.[A-Za-z0-9]))[\p{L}\p{M}\p{N}._~\-/%+@\\()[\]]*(?::\d+)?(?::\d+)?/gu
@@ -86,10 +86,8 @@ function trimSpacedPathTrailingProse(
   // segment is path-like (contains a separator) — "v1.2 reports/result.json"
   // extends, prose like "failed to start app.py" must not be swallowed.
   let selected: string | null = null
-  // Why: also stop before non-ASCII letters so `…/파일.md로 열었습니다` keeps
-  // only the path after `\p{L}` widening (space-only trim leaves the particle).
-  const extensionPrefixPattern =
-    /\.[A-Za-z0-9_+-]+(?::\d+)?(?::\d+)?(?=\s+|$|(?:(?![A-Za-z])\p{L}))/gu
+  // Also stop at non-ASCII: a CJK bracket closes a citation as often as a particle.
+  const extensionPrefixPattern = /\.[A-Za-z0-9_+-]+(?::\d+)?(?::\d+)?(?=\s+|$|\P{ASCII})/gu
   let match: RegExpExecArray | null
   while ((match = extensionPrefixPattern.exec(range.text)) !== null) {
     const end = match.index + match[0].length
@@ -159,7 +157,7 @@ function matchSpacedFilePathAtColumn(lineText: string, col: number): TappedFileP
     if (!proseTrimmed) {
       continue
     }
-    const candidate = trimFileLinkRangeTrailingNonAsciiLetters(proseTrimmed)
+    const candidate = trimFileLinkRangeTrailingNonAsciiProse(proseTrimmed)
     if (col < candidate.startIndex || col >= candidate.endIndex) {
       continue
     }
@@ -189,7 +187,7 @@ export function matchFilePathAtColumn(lineText: string, col: number): TappedFile
     if (!trimmed) {
       continue
     }
-    const candidate = trimFileLinkRangeTrailingNonAsciiLetters(trimmed)
+    const candidate = trimFileLinkRangeTrailingNonAsciiProse(trimmed)
     if (col < candidate.startIndex || col >= candidate.endIndex) {
       continue
     }

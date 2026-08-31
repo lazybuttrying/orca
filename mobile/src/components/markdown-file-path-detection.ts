@@ -4,7 +4,7 @@
 // annoyance, but a false positive on prose or a version number is a broken tap.
 
 import { parseFileLinkLocation } from '../../../src/shared/file-link-location'
-import { trimFileLinkTrailingNonAsciiLetters } from '../../../src/shared/non-ascii-terminal-text-boundary'
+import { trimFileLinkTrailingNonAsciiProse } from '../../../src/shared/non-ascii-terminal-text-boundary'
 
 export type FilePathSegment =
   | { type: 'text'; value: string }
@@ -89,9 +89,8 @@ const EXTENSION_SET = new Set<string>(FILE_EXTENSIONS)
 // connected runtime, which may be Windows even when the phone is not. Leading
 // alternatives cover Windows drives, UNC, and POSIX absolute roots; the optional
 // tail captures only bounded agent-style :line(:col) citations.
-// Why \p{L}\p{M}\p{N}: ASCII-only segments truncated CJK directory names. Keep
-// the extension ASCII so particles after `.md` stay outside the match; still
-// run trimFileLinkTrailingNonAsciiLetters for code-span / line:col edges.
+// Why \p{L}\p{M}\p{N}: ASCII-only segments truncated CJK directory names; the
+// extension stays ASCII so particles after `.md` fall outside the match.
 const CANDIDATE_PATTERN =
   /(?:(?:[A-Za-z]:[\\/]|\\\\|[\\/]|\.{1,2}[\\/])(?:[\p{L}\p{M}\p{N}_.@~+-]+[\\/])*|(?:[\p{L}\p{M}\p{N}_.@~+-]+[\\/])+)[\p{L}\p{M}\p{N}_.@+-]+\.[A-Za-z0-9]+(?::[1-9]\d*(?::[1-9]\d*)?(?![A-Za-z0-9_@%]))?/gu
 
@@ -130,7 +129,7 @@ export function splitFilePathLineSuffix(pathText: string): {
 function isOpenablePath(pathText: string): boolean {
   // A :line(:col) tail is part of the citation, not the file name. Strip CJK
   // particles glued after an ASCII extension before extension lookup.
-  const { path: candidate } = splitFilePathLineSuffix(trimFileLinkTrailingNonAsciiLetters(pathText))
+  const { path: candidate } = splitFilePathLineSuffix(trimFileLinkTrailingNonAsciiProse(pathText))
   // Reject anything URL-ish or scheme-bearing — those are handled as web links.
   if (candidate.includes('://') || hasMidTokenAt(candidate)) {
     return false
@@ -183,7 +182,7 @@ export function detectFilePathSegments(text: string): FilePathSegment[] {
   CANDIDATE_PATTERN.lastIndex = 0
 
   while ((match = CANDIDATE_PATTERN.exec(text))) {
-    const candidate = trimFileLinkTrailingNonAsciiLetters(match[0])
+    const candidate = trimFileLinkTrailingNonAsciiProse(match[0])
     // Skip candidates that are part of a URL: a scheme colon, a domain tail, or
     // a preceding slash (the leading slash of an absolute path is part of the
     // match itself, so prev '/' means a '://' or '//' remainder, not a path).
@@ -217,7 +216,7 @@ export function detectFilePathSegments(text: string): FilePathSegment[] {
  * bare `file.ts` here even without a slash.
  */
 export function isFilePathCodeSpan(code: string): boolean {
-  const trimmed = trimFileLinkTrailingNonAsciiLetters(code.trim())
+  const trimmed = trimFileLinkTrailingNonAsciiProse(code.trim())
   if (!trimmed || /\s/.test(trimmed)) {
     return false
   }

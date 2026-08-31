@@ -137,5 +137,25 @@ export const TERMINAL_FILE_LINK_TAP_CONFORMANCE_CASES: TerminalFileLinkTapConfor
     lineText: 'just some prose with no path here',
     tapText: 'prose',
     expected: null
+  },
+  // A glued particle is not always followed by a space: punctuation, ASCII, and CJK
+  // brackets all close the citation, and a letters-only trim never fires there.
+  {
+    name: 'particle then full-width parenthesis',
+    lineText: 'plans/foo.mdを(参照) 確認',
+    tapText: 'foo',
+    expected: { pathText: 'plans/foo.md', line: null, column: null }
+  },
+  {
+    name: 'particle then ascii tail',
+    lineText: 'plans/foo.mdへabc',
+    tapText: 'foo',
+    expected: { pathText: 'plans/foo.md', line: null, column: null }
+  },
+  {
+    name: 'cjk closing bracket after extension',
+    lineText: 'docs/日本語.md」を 参照',
+    tapText: '日本語',
+    expected: { pathText: 'docs/日本語.md', line: null, column: null }
   }
 ]

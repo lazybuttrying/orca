@@ -18,7 +18,7 @@ export const TERMINAL_PATH_TAP_JS = String.raw`
 	  var SPACED_PATH_RE = /(?:~[\\/]|[\\/]|\.{1,2}[\\/]|[A-Za-z]:[\\/]|[\p{L}\p{M}\p{N}._-]+[\\/])[^()[\]{}'",;<>|\x60\r\n]+(?::\d+)?(?::\d+)?/gu;
 	  var PATH_LEADING_TRIM = { '(': 1, '[': 1, '{': 1, '"': 1, "'": 1 };
 	  var PATH_TRAILING_TRIM = { ')': 1, ']': 1, '}': 1, '"': 1, "'": 1, ',': 1, ';': 1, '.': 1 };
-	  var ASCII_EXT_THEN_NON_ASCII_LETTERS = /^(.*\.[A-Za-z0-9_+-]+(?::\d+)?(?::\d+)?)((?:(?![A-Za-z])\p{L})+)$/u;
+	  var ASCII_EXT_THEN_NON_ASCII = /^(.*\.[A-Za-z0-9_+-]+(?::\d+)?(?::\d+)?)(\P{ASCII}[\s\S]*)$/u;
 
 	  function parsePathLineCol(value) {
     var m = /^(.*?)(?::(\d+))?(?::(\d+))?$/.exec(value);
@@ -40,8 +40,8 @@ export const TERMINAL_PATH_TAP_JS = String.raw`
 	    return { text: raw.slice(start, end), startIndex: rawStart + start, endIndex: rawStart + end };
 	  }
 
-	  function trimTrailingNonAsciiLetters(range) {
-	    var match = ASCII_EXT_THEN_NON_ASCII_LETTERS.exec(range.text);
+	  function trimTrailingNonAsciiProse(range) {
+	    var match = ASCII_EXT_THEN_NON_ASCII.exec(range.text);
 	    if (!match) return range;
 	    return { text: match[1], startIndex: range.startIndex, endIndex: range.startIndex + match[1].length };
 	  }
@@ -60,8 +60,8 @@ export const TERMINAL_PATH_TAP_JS = String.raw`
 	    // A line-end extension token only extends the span when the added segment
 	    // is path-like (contains a separator) — prose must not be swallowed.
 	    var selected = null;
-	    // Also stop before non-ASCII letters (CJK particles glued to the ext).
-	    var extensionPrefixPattern = /\.[A-Za-z0-9_+-]+(?::\d+)?(?::\d+)?(?=\s+|$|(?:(?![A-Za-z])\p{L}))/gu;
+	    // Also stop before any non-ASCII char (particles and CJK brackets glued to the ext).
+	    var extensionPrefixPattern = /\.[A-Za-z0-9_+-]+(?::\d+)?(?::\d+)?(?=\s+|$|\P{ASCII})/gu;
 	    var match;
 	    while ((match = extensionPrefixPattern.exec(range.text)) !== null) {
 	      var end = match.index + match[0].length;
@@ -101,7 +101,7 @@ export const TERMINAL_PATH_TAP_JS = String.raw`
 	      if (!trimmed || (!hasSeparatorAfterWhitespace(trimmed.text) && !hasSpacedPathExtension(trimmed.text))) continue;
 	      var proseTrimmed = trimSpacedPathTrailingProse(trimmed, col);
 	      if (!proseTrimmed) continue;
-	      var candidate = trimTrailingNonAsciiLetters(proseTrimmed);
+	      var candidate = trimTrailingNonAsciiProse(proseTrimmed);
 	      if (col < candidate.startIndex || col >= candidate.endIndex) continue;
 	      var parsed = parsePathLineCol(candidate.text);
 	      if (parsed) return parsed;
@@ -119,7 +119,7 @@ export const TERMINAL_PATH_TAP_JS = String.raw`
       if (raw.length === 0) { FILE_PATH_RE.lastIndex += 1; continue; }
 	      var trimmed = trimPathBoundaryPunctuation(raw, match.index);
 	      if (!trimmed) continue;
-	      var candidate = trimTrailingNonAsciiLetters(trimmed);
+	      var candidate = trimTrailingNonAsciiProse(trimmed);
 	      if (col < candidate.startIndex || col >= candidate.endIndex) continue;
 	      var parsed = parsePathLineCol(candidate.text);
 	      if (parsed) return parsed;
