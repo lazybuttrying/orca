@@ -1,4 +1,4 @@
-import { trimFileLinkRangeTrailingNonAsciiProse } from '../../../shared/non-ascii-terminal-text-boundary'
+import { trimFileLinkRangeNonAsciiProse } from '../../../shared/non-ascii-terminal-text-boundary'
 import {
   detectTerminalFileLinkRanges,
   terminalFileLinkRangesOverlap,
@@ -24,7 +24,12 @@ const EXTENSIONLESS_FILENAMES = new Set([
   'CONTRIBUTING'
 ])
 
-const BARE_FILENAME_PATTERN = /^[A-Za-z0-9_][A-Za-z0-9._+-]*$/
+// Why \p{L}\p{M}\p{N}: an ASCII-only name never matched `文書.md`, so a bare
+// non-Latin filename was not a link at all (#13396).
+const BARE_FILENAME_PATTERN = /^[\p{L}\p{M}\p{N}_][\p{L}\p{M}\p{N}._+-]*$/u
+// Why an ASCII extension: with the wider name class, every sentence ending in `.`
+// would otherwise reach the filesystem probe.
+const BARE_FILENAME_EXTENSION = /\.[A-Za-z0-9_+-]+$/
 const MAX_BARE_FILENAME_TOKEN_LENGTH = 120
 
 function looksLikeFilename(token: string): boolean {
@@ -38,7 +43,7 @@ function looksLikeFilename(token: string): boolean {
     return false
   }
   if (token.includes('.')) {
-    return !/^\.+$/.test(token)
+    return BARE_FILENAME_EXTENSION.test(token)
   }
   return EXTENSIONLESS_FILENAMES.has(token)
 }
@@ -60,7 +65,7 @@ export function detectBareFilenameLinks(
       continue
     }
     // Trim first: `README.mdへ` fails looksLikeFilename and never becomes a link.
-    const link = toParsedTerminalFileLink(trimFileLinkRangeTrailingNonAsciiProse(range))
+    const link = toParsedTerminalFileLink(trimFileLinkRangeNonAsciiProse(range))
     if (!link || !looksLikeFilename(link.pathText)) {
       continue
     }

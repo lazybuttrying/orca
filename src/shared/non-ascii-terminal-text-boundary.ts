@@ -22,6 +22,34 @@ export function trimFileLinkTrailingNonAsciiProse(text: string): string {
   return match?.groups?.path ?? text
 }
 
+// Why only before an ASCII start: `참고파일.md` may genuinely be a file name, so a
+// leading non-ASCII run is prose only when the path resumes in ASCII (`참고docs/x.md`).
+const LEADING_NON_ASCII_THEN_ASCII = /^(?<prose>\P{ASCII}+)(?<path>[A-Za-z0-9_][\s\S]*)$/u
+
+export function trimFileLinkLeadingNonAsciiProse(text: string): string {
+  return LEADING_NON_ASCII_THEN_ASCII.exec(text)?.groups?.path ?? text
+}
+
+export function trimFileLinkNonAsciiProse(text: string): string {
+  return trimFileLinkTrailingNonAsciiProse(trimFileLinkLeadingNonAsciiProse(text))
+}
+
+export function trimFileLinkRangeLeadingNonAsciiProse<
+  T extends { text: string; startIndex: number; endIndex: number }
+>(range: T): T {
+  const trimmed = trimFileLinkLeadingNonAsciiProse(range.text)
+  if (trimmed === range.text) {
+    return range
+  }
+  return { ...range, text: trimmed, startIndex: range.endIndex - trimmed.length }
+}
+
+export function trimFileLinkRangeNonAsciiProse<
+  T extends { text: string; startIndex: number; endIndex: number }
+>(range: T): T {
+  return trimFileLinkRangeTrailingNonAsciiProse(trimFileLinkRangeLeadingNonAsciiProse(range))
+}
+
 export function trimFileLinkRangeTrailingNonAsciiProse<
   T extends { text: string; startIndex: number; endIndex: number }
 >(range: T): T {

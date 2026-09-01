@@ -19,6 +19,8 @@ export const TERMINAL_PATH_TAP_JS = String.raw`
 	  var PATH_LEADING_TRIM = { '(': 1, '[': 1, '{': 1, '"': 1, "'": 1 };
 	  var PATH_TRAILING_TRIM = { ')': 1, ']': 1, '}': 1, '"': 1, "'": 1, ',': 1, ';': 1, '.': 1 };
 	  var ASCII_EXT_THEN_NON_ASCII = /^(.*\.[A-Za-z0-9_+-]+(?::\d+)?(?::\d+)?)(\P{ASCII}[\s\S]*)$/u;
+	  // Leading prose only when the path resumes in ASCII, so a wholly non-Latin name survives.
+	  var LEADING_NON_ASCII_THEN_ASCII = /^(\P{ASCII}+)([A-Za-z0-9_][\s\S]*)$/u;
 
 	  function parsePathLineCol(value) {
     var m = /^(.*?)(?::(\d+))?(?::(\d+))?$/.exec(value);
@@ -44,6 +46,16 @@ export const TERMINAL_PATH_TAP_JS = String.raw`
 	    var match = ASCII_EXT_THEN_NON_ASCII.exec(range.text);
 	    if (!match) return range;
 	    return { text: match[1], startIndex: range.startIndex, endIndex: range.startIndex + match[1].length };
+	  }
+
+	  function trimLeadingNonAsciiProse(range) {
+	    var match = LEADING_NON_ASCII_THEN_ASCII.exec(range.text);
+	    if (!match) return range;
+	    return { text: match[2], startIndex: range.endIndex - match[2].length, endIndex: range.endIndex };
+	  }
+
+	  function trimNonAsciiProse(range) {
+	    return trimTrailingNonAsciiProse(trimLeadingNonAsciiProse(range));
 	  }
 
 	  function hasSeparatorAfterWhitespace(text) {
@@ -101,7 +113,7 @@ export const TERMINAL_PATH_TAP_JS = String.raw`
 	      if (!trimmed || (!hasSeparatorAfterWhitespace(trimmed.text) && !hasSpacedPathExtension(trimmed.text))) continue;
 	      var proseTrimmed = trimSpacedPathTrailingProse(trimmed, col);
 	      if (!proseTrimmed) continue;
-	      var candidate = trimTrailingNonAsciiProse(proseTrimmed);
+	      var candidate = trimNonAsciiProse(proseTrimmed);
 	      if (col < candidate.startIndex || col >= candidate.endIndex) continue;
 	      var parsed = parsePathLineCol(candidate.text);
 	      if (parsed) return parsed;
@@ -119,7 +131,7 @@ export const TERMINAL_PATH_TAP_JS = String.raw`
       if (raw.length === 0) { FILE_PATH_RE.lastIndex += 1; continue; }
 	      var trimmed = trimPathBoundaryPunctuation(raw, match.index);
 	      if (!trimmed) continue;
-	      var candidate = trimTrailingNonAsciiProse(trimmed);
+	      var candidate = trimNonAsciiProse(trimmed);
 	      if (col < candidate.startIndex || col >= candidate.endIndex) continue;
 	      var parsed = parsePathLineCol(candidate.text);
 	      if (parsed) return parsed;

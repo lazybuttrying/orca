@@ -113,6 +113,48 @@ describe('terminal path helpers', () => {
       expect(links.map((link) => link.displayText)).toEqual(['package.json'])
     })
 
+    // Prose glues onto the left as readily as the right; the span must exclude it,
+    // and startIndex must move with it.
+    it.each([
+      ['文書はREADME.mdだ', 'README.md'],
+      ['参照docs/文書.md', 'docs/文書.md'],
+      ['経路はdocs/設計.mdへ', 'docs/設計.md']
+    ])('trims non-Latin prose glued before a path: %s', (line, expected) => {
+      const links = extractTerminalFileLinks(line)
+      expect(links.map((link) => link.pathText)).toContain(expected)
+      const link = links.find((entry) => entry.pathText === expected)!
+      expect(line.slice(link.startIndex, link.endIndex)).toBe(expected)
+    })
+
+    // A leading non-Latin run is only prose when the path resumes in ASCII —
+    // otherwise `参照文書.md` and `日本語フォルダ/x.md` would lose their real names.
+    it.each(['参照文書.md', '日本語フォルダ/文書.md'])(
+      'keeps a wholly non-Latin name intact: %s',
+      (line) => {
+        expect(extractTerminalFileLinks(line).map((l) => l.pathText)).toEqual([line])
+      }
+    )
+
+    // A non-Latin *name* has to link too, not just a non-Latin tail (#13396).
+    it.each([
+      ['文書.md', '文書.md'],
+      ['文書.mdへ', '文書.md'],
+      ['設計.txtに', '設計.txt']
+    ])('detects bare filenames whose name is non-Latin: %s', (token, pathText) => {
+      const links = extractTerminalFileLinks(token)
+      expect(links).toHaveLength(1)
+      expect(links[0]).toMatchObject({ pathText })
+    })
+
+    // Widening the name class must not send every sentence ending in `.` to the
+    // filesystem probe, so an ASCII extension is still required.
+    it.each(['確定しました。', '確定しました.', 'よろしくお願いします.'])(
+      'does not treat trailing-dot prose as a bare filename: %s',
+      (token) => {
+        expect(extractTerminalFileLinks(token)).toEqual([])
+      }
+    )
+
     it.each([
       ['README.mdへ', 'README.md'],
       ['AGENTS.mdに', 'AGENTS.md'],

@@ -1,4 +1,4 @@
-import { trimFileLinkRangeTrailingNonAsciiProse } from '../../../shared/non-ascii-terminal-text-boundary'
+import { trimFileLinkRangeNonAsciiProse } from '../../../shared/non-ascii-terminal-text-boundary'
 import { normalizeAbsolutePath } from './terminal-path-normalization'
 import { resolveExplicitFileLinkTarget } from './explicit-file-link-target'
 import { detectBareFilenameLinks } from './terminal-bare-file-link-detection'
@@ -177,7 +177,7 @@ function detectLocalPathLinks(
     if (!/[\\/]/.test(range.text)) {
       continue
     }
-    const link = toParsedTerminalFileLink(trimFileLinkRangeTrailingNonAsciiProse(range))
+    const link = toParsedTerminalFileLink(trimFileLinkRangeNonAsciiProse(range))
     if (link) {
       links.push(link)
     }
@@ -219,7 +219,7 @@ function detectSpacedLocalPathLinks(
       const candidateLinks = candidateRanges
         .map((candidateRange) =>
           toParsedTerminalFileLink(
-            trimFileLinkRangeTrailingNonAsciiProse(
+            trimFileLinkRangeNonAsciiProse(
               trimSpacedPathTrailingProse(trimTrailingWhitespace(candidateRange))
             )
           )

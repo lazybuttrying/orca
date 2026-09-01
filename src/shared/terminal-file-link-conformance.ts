@@ -157,5 +157,25 @@ export const TERMINAL_FILE_LINK_TAP_CONFORMANCE_CASES: TerminalFileLinkTapConfor
     lineText: 'docs/日本語.md」を 参照',
     tapText: '日本語',
     expected: { pathText: 'docs/日本語.md', line: null, column: null }
+  },
+  // Prose glues onto the left as readily as the right.
+  {
+    name: 'prose glued before a bare filename',
+    lineText: '文書はREADME.mdだ',
+    tapText: 'README',
+    expected: { pathText: 'README.md', line: null, column: null }
+  },
+  {
+    name: 'prose glued before a separator path',
+    lineText: '参照docs/文書.md を見て',
+    tapText: 'docs/',
+    expected: { pathText: 'docs/文書.md', line: null, column: null }
+  },
+  // Only at a non-ASCII -> ASCII boundary: a wholly non-Latin name is a real name.
+  {
+    name: 'wholly non-latin name stays whole',
+    lineText: '参照文書.md を見て',
+    tapText: '参照',
+    expected: { pathText: '参照文書.md', line: null, column: null }
   }
 ]

@@ -7,7 +7,7 @@ import {
   parseFileLinkLocation,
   type ParsedFileLinkLocation
 } from '../../../src/shared/file-link-location'
-import { trimFileLinkRangeTrailingNonAsciiProse } from '../../../src/shared/non-ascii-terminal-text-boundary'
+import { trimFileLinkRangeNonAsciiProse } from '../../../src/shared/non-ascii-terminal-text-boundary'
 
 export type TappedFilePath = ParsedFileLinkLocation
 
@@ -17,7 +17,7 @@ export type TappedFilePath = ParsedFileLinkLocation
 // existence-check reject non-files — agents often print a bare filename, so
 // requiring a slash would miss the common case.
 // Why \p{L}\p{M}\p{N}: ASCII-only classes truncated CJK path segments (#13396).
-// Pair with trimFileLinkRangeTrailingNonAsciiProse so glued particles after
+// Pair with trimFileLinkRangeNonAsciiProse so glued particles after
 // an extension are not part of the tap target.
 const LOCAL_PATH_REGEX =
   /(?:~[\\/]|[\\/]|\.{1,2}[\\/]|[A-Za-z]:[\\/]|[\p{L}\p{M}\p{N}._-]+[\\/]|(?=[\p{L}\p{M}\p{N}._-]*\.[A-Za-z0-9]))[\p{L}\p{M}\p{N}._~\-/%+@\\()[\]]*(?::\d+)?(?::\d+)?/gu
@@ -157,7 +157,7 @@ function matchSpacedFilePathAtColumn(lineText: string, col: number): TappedFileP
     if (!proseTrimmed) {
       continue
     }
-    const candidate = trimFileLinkRangeTrailingNonAsciiProse(proseTrimmed)
+    const candidate = trimFileLinkRangeNonAsciiProse(proseTrimmed)
     if (col < candidate.startIndex || col >= candidate.endIndex) {
       continue
     }
@@ -187,7 +187,7 @@ export function matchFilePathAtColumn(lineText: string, col: number): TappedFile
     if (!trimmed) {
       continue
     }
-    const candidate = trimFileLinkRangeTrailingNonAsciiProse(trimmed)
+    const candidate = trimFileLinkRangeNonAsciiProse(trimmed)
     if (col < candidate.startIndex || col >= candidate.endIndex) {
       continue
     }

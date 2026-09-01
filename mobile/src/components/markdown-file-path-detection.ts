@@ -4,7 +4,7 @@
 // annoyance, but a false positive on prose or a version number is a broken tap.
 
 import { parseFileLinkLocation } from '../../../src/shared/file-link-location'
-import { trimFileLinkTrailingNonAsciiProse } from '../../../src/shared/non-ascii-terminal-text-boundary'
+import { trimFileLinkNonAsciiProse } from '../../../src/shared/non-ascii-terminal-text-boundary'
 
 export type FilePathSegment =
   | { type: 'text'; value: string }
@@ -129,7 +129,7 @@ export function splitFilePathLineSuffix(pathText: string): {
 function isOpenablePath(pathText: string): boolean {
   // A :line(:col) tail is part of the citation, not the file name. Strip CJK
   // particles glued after an ASCII extension before extension lookup.
-  const { path: candidate } = splitFilePathLineSuffix(trimFileLinkTrailingNonAsciiProse(pathText))
+  const { path: candidate } = splitFilePathLineSuffix(trimFileLinkNonAsciiProse(pathText))
   // Reject anything URL-ish or scheme-bearing — those are handled as web links.
   if (candidate.includes('://') || hasMidTokenAt(candidate)) {
     return false
@@ -182,7 +182,7 @@ export function detectFilePathSegments(text: string): FilePathSegment[] {
   CANDIDATE_PATTERN.lastIndex = 0
 
   while ((match = CANDIDATE_PATTERN.exec(text))) {
-    const candidate = trimFileLinkTrailingNonAsciiProse(match[0])
+    const candidate = trimFileLinkNonAsciiProse(match[0])
     // Skip candidates that are part of a URL: a scheme colon, a domain tail, or
     // a preceding slash (the leading slash of an absolute path is part of the
     // match itself, so prev '/' means a '://' or '//' remainder, not a path).
@@ -216,7 +216,7 @@ export function detectFilePathSegments(text: string): FilePathSegment[] {
  * bare `file.ts` here even without a slash.
  */
 export function isFilePathCodeSpan(code: string): boolean {
-  const trimmed = trimFileLinkTrailingNonAsciiProse(code.trim())
+  const trimmed = trimFileLinkNonAsciiProse(code.trim())
   if (!trimmed || /\s/.test(trimmed)) {
     return false
   }
