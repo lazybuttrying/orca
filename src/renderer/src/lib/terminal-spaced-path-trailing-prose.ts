@@ -8,6 +8,10 @@ import type { DetectedTerminalFileLinkRange } from './terminal-file-link-detecti
 // Also stop at non-ASCII: a CJK bracket closes a citation as often as a particle.
 const EXTENSION_PREFIX_PATTERN = /\.[A-Za-z0-9_+-]+(?::\d+)?(?::\d+)?(?=\s+|$|\P{ASCII})/gu
 
+// A separator plus an alphabetic extension means the span is already a finished
+// path; `v1.2` is not, so a numeric tail still extends into `v1.2 reports/x.json`.
+const COMPLETE_PATH = /[\\/].*\.[A-Za-z][A-Za-z0-9_+-]*$/
+
 function countPathStarts(text: string): number {
   let count = 0
   for (const match of text.matchAll(/(?:^|\s)(?:~[\\/]|[\\/]|\.{1,2}[\\/]|[A-Za-z]:[\\/])/g)) {
@@ -28,6 +32,11 @@ export function trimSpacedPathTrailingProse(
     const text = range.text.slice(0, end)
     if (countPathStarts(text) > 1) {
       continue
+    }
+    // Why: countPathStarts only sees absolute starts, so two relative paths on one
+    // line used to merge into a span that resolves to nothing and killed both.
+    if (selected !== null && COMPLETE_PATH.test(selected)) {
+      break
     }
     if (
       end < range.text.length ||

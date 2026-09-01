@@ -225,9 +225,16 @@ function detectSpacedLocalPathLinks(
           )
         )
         .filter((link): link is ParsedTerminalFileLink => link !== null)
-      const link = candidateLinks[0]
+      // Prefix candidates can now trim to the same span, so emit each span once.
+      const seenSpans = new Set<string>()
+      const uniqueLinks = candidateLinks.filter((candidateLink) =>
+        seenSpans.has(`${candidateLink.startIndex}:${candidateLink.endIndex}`)
+          ? false
+          : (seenSpans.add(`${candidateLink.startIndex}:${candidateLink.endIndex}`), true)
+      )
+      const link = uniqueLinks[0]
       if (link) {
-        for (const candidateLink of candidateLinks) {
+        for (const candidateLink of uniqueLinks) {
           links.push(candidateLink)
         }
         insertTerminalFileLinkClaimedRange(claimedRanges, [link.startIndex, link.endIndex])

@@ -79,6 +79,8 @@ export const TERMINAL_PATH_TAP_JS = String.raw`
 	      var end = match.index + match[0].length;
 	      var text = range.text.slice(0, end);
 	      if (countPathStarts(text) > 1) continue;
+	      // A finished path plus another hop across whitespace is a second path.
+	      if (selected !== null && COMPLETE_PATH.test(selected)) break;
 	      if (end < range.text.length || selected === null || /[\\/]/.test(range.text.slice(selected.length, end))) {
 	        selected = text;
 	      }
@@ -90,6 +92,8 @@ export const TERMINAL_PATH_TAP_JS = String.raw`
 	    var text = range.text.replace(/\s+$/, '');
 	    return { text: text, startIndex: range.startIndex, endIndex: range.startIndex + text.length };
 	  }
+
+	  var COMPLETE_PATH = /[\\/].*\.[A-Za-z][A-Za-z0-9_+-]*$/;
 
 	  function countPathStarts(text) {
 	    var count = 0;

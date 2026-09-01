@@ -95,6 +95,9 @@ function trimSpacedPathTrailingProse(
     if (countPathStarts(text) > 1) {
       continue
     }
+    if (selected !== null && COMPLETE_PATH.test(selected)) {
+      break
+    }
     if (
       end < range.text.length ||
       selected === null ||
@@ -120,6 +123,10 @@ function trimSpacedPathTrailingProse(
     endIndex: range.startIndex + selected.length
   }
 }
+
+// Mirror of the renderer rule: a separator plus an alphabetic extension means the
+// span is already a finished path, so a further hop across whitespace is a second one.
+const COMPLETE_PATH = /[\\/].*\.[A-Za-z][A-Za-z0-9_+-]*$/
 
 function countPathStarts(text: string): number {
   let count = 0

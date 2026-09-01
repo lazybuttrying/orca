@@ -171,6 +171,20 @@ export const TERMINAL_FILE_LINK_TAP_CONFORMANCE_CASES: TerminalFileLinkTapConfor
     tapText: 'docs/',
     expected: { pathText: 'docs/文書.md', line: null, column: null }
   },
+  // Two relative paths on one line must stay separate; they used to merge into a
+  // span that resolved to nothing and killed both.
+  {
+    name: 'two relative paths, first',
+    lineText: 'docs/a.md see docs/b.md',
+    tapText: 'a.md',
+    expected: { pathText: 'docs/a.md', line: null, column: null }
+  },
+  {
+    name: 'two relative paths, second',
+    lineText: 'docs/a.md see docs/b.md',
+    tapText: 'b.md',
+    expected: { pathText: 'docs/b.md', line: null, column: null }
+  },
   // Only at a non-ASCII -> ASCII boundary: a wholly non-Latin name is a real name.
   {
     name: 'wholly non-latin name stays whole',
